@@ -2,6 +2,7 @@ import 'package:cbah/flashScreen.dart';
 import 'package:cbah/inScreen.dart';
 import 'package:cbah/registerScreen.dart';
 import 'package:cbah/welcomeScreen.dart';
+import 'user.dart';
 import 'loginScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:cbah/inScreen.dart';

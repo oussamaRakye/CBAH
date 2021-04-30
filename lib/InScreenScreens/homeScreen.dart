@@ -1,3 +1,4 @@
+import 'package:cbah/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:cbah/user.dart';
@@ -13,7 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final _firestore = FirebaseFirestore.instance;
 
-  int slots = 100;
+  static int slots = 100;
   static final NUMBER_SLOTS = 50;
 
   bool bookButtonEnabled = true;
@@ -36,9 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void setSlots(String dateTimeId) async{
     var temp = await _firestore.collection('slots').doc(dateTimeId).snapshots().first;
+    var slotsDetails = await _firestore.collection('slotsDetails').doc('details').snapshots().first;
     setState(() {
       if(temp.data() == null){
-        slots = NUMBER_SLOTS;
+        slots = slotsDetails.data()['slots'];
         _firestore.collection('slots').doc(dateTimeId).set({
           'number': slots,
           'attendants': [],
@@ -140,19 +142,39 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Hello ${Usr.name}!'),
-        Text('Next volunteering day is on $dateFridayString!'),
-        Text('There are $slots available!'),
+        Text(
+          'Hello ${Usr.name}!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 40.0),
+        ),
+        Text(
+            'Next volunteering day is on $dateFridayString!',
+          textAlign: TextAlign.center,
+        ),
+        //Text('There are $slots available!'),
+        // Button(
+        //   tag: 'book',
+        //   enabled: bookButtonEnabled,
+        //   function: (){book(getDateId(dateFriday));},
+        //   text: 'Book slot',
+        // ),
         Button(
           tag: 'book',
           enabled: bookButtonEnabled,
+          height: MediaQuery.of(context).size.width*0.75,
+          shapeBorder: CircleBorder(side: BorderSide.none),
           function: (){book(getDateId(dateFriday));},
-          text: 'Book slot',
+          child: Column(
+            children: [
+              Text('Book slot', style: TextStyle(color: background, fontSize: 30.0)),
+              Text('$slots slots available', style: TextStyle(color: background)),
+            ],
+          ),
         ),
         Button(
           tag: 'unbook',
           enabled: (!bookButtonEnabled && Usr.attending),
-          function: (){unbook(getDateId(dateFriday));},
+          function: !(!bookButtonEnabled && Usr.attending) ? null : (){unbook(getDateId(dateFriday));},
           text: 'Unbook slot',
         ),
       ],

@@ -7,8 +7,11 @@ class Button extends StatelessWidget {
   final Function function;
   final String tag;
   bool enabled;
+  ShapeBorder shapeBorder;
+  final double height;
+  final Widget child;
 
-  Button({this.text, this.function, this.tag, this.enabled=true});
+  Button({this.text='', this.function, this.tag, this.enabled=true, this.shapeBorder, this.height=42.0, this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -16,20 +19,17 @@ class Button extends StatelessWidget {
       tag: tag,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 16.0),
-        child: Material(
+        child: MaterialButton(
+          shape: shapeBorder==null ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)) : shapeBorder,
           elevation: 5.0,
           color: enabled ? Colors.white : Colors.grey,
-          borderRadius: BorderRadius.circular(30.0),
-          child: MaterialButton(
-
-            onPressed: enabled ? function : null,
-            minWidth: 200.0,
-            height: 42.0,
-            child: Text(
-              text,
-              style: TextStyle(color: background),
-            ),
-          ),
+          onPressed: enabled || function==null ? function : (){},
+          minWidth: 200.0,
+          height: height,
+          child: child==null ? Text(
+            text,
+            style: TextStyle(color: background),
+          ) : child,
         ),
       ),
     );

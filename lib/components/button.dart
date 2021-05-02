@@ -18,7 +18,7 @@ class Button extends StatelessWidget {
     return Hero(
       tag: tag,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.0),
+        padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
         child: MaterialButton(
           shape: shapeBorder==null ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)) : shapeBorder,
           elevation: 5.0,

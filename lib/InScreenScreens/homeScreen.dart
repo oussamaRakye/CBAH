@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:cbah/user.dart';
 import 'package:cbah/components/button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
 
@@ -15,7 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _firestore = FirebaseFirestore.instance;
 
   static int slots = 100;
-  static final NUMBER_SLOTS = 50;
+  int maxSlots;
 
   bool bookButtonEnabled = true;
 
@@ -38,18 +39,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void setSlots(String dateTimeId) async{
     var temp = await _firestore.collection('slots').doc(dateTimeId).snapshots().first;
     var slotsDetails = await _firestore.collection('slotsDetails').doc('details').snapshots().first;
+    maxSlots = slotsDetails.data()['slots'];
     setState(() {
       if(temp.data() == null){
         slots = slotsDetails.data()['slots'];
         _firestore.collection('slots').doc(dateTimeId).set({
-          'number': slots,
           'attendants': [],
         });
       }
       else{
         print(temp.data());
         print(dateTimeId);
-        slots = temp.data()['number'];
+        slots = maxSlots - List.from(temp.data()['attendants']).length;
       }
     });
 
@@ -70,10 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void book(String dateTimeId) async{
     var temp = await _firestore.collection('slots').doc(dateTimeId).snapshots().first;
-    slots = temp.data()['number'];
 
     setState(() {
-      slots = temp.data()['number'];
+      slots = maxSlots - List.from(temp.data()['attendants']).length;
       if(slots <= 0){
         bookButtonEnabled = false;
         return;
@@ -81,7 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
       slots -= 1;
 
       _firestore.collection('slots').doc(dateTimeId).set({
-        'number': slots,
         'attendants': temp.data()['attendants'] + [Usr.email],
       });
 
@@ -92,10 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void unbook(String dateTimeId) async{
     var temp = await _firestore.collection('slots').doc(dateTimeId).snapshots().first;
-    slots = temp.data()['number'];
 
     setState(() {
-      slots = temp.data()['number'];
       if(!Usr.attending){
         return;
       }
@@ -105,7 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
       listAttendants.removeWhere((element) => element == Usr.email);
 
       _firestore.collection('slots').doc(dateTimeId).set({
-        'number': slots,
         'attendants': listAttendants,
       });
 
@@ -115,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String getDateId(DateTime dateTime){
-    return '${dateTime.day}${dateTime.month}${dateTime.year}b';
+    return '${dateTime.day}${dateTime.month}${dateTime.year}bb';
   }
 
 
@@ -138,44 +134,71 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
       children: [
-        Text(
-          'Hello ${Usr.name}!',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 40.0),
+        Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Hello ${Usr.name}!',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 40.0),
+            ),
+            Text(
+              'Next volunteering day is on $dateFridayString!',
+              textAlign: TextAlign.center,
+            ),
+            //Text('There are $slots available!'),
+            // Button(
+            //   tag: 'book',
+            //   enabled: bookButtonEnabled,
+            //   function: (){book(getDateId(dateFriday));},
+            //   text: 'Book slot',
+            // ),
+            Button(
+              tag: 'book',
+              enabled: bookButtonEnabled,
+              height: MediaQuery.of(context).size.width*0.75,
+              shapeBorder: CircleBorder(side: BorderSide.none),
+              function: (){book(getDateId(dateFriday));},
+              child: Column(
+                children: [
+                  Text('You are${Usr.attending ? ' ' : ' not '}attending', style: TextStyle(color: background)),
+                  Text('Book slot', style: TextStyle(color: background, fontSize: 30.0)),
+                  Text('$slots slots available', style: TextStyle(color: background)),
+                ],
+              ),
+            ),
+            Button(
+              tag: 'unbook',
+              enabled: (!bookButtonEnabled && Usr.attending),
+              function: !(!bookButtonEnabled && Usr.attending) ? null : (){unbook(getDateId(dateFriday));},
+              text: 'Unbook slot',
+            ),
+          ],
         ),
-        Text(
-            'Next volunteering day is on $dateFridayString!',
-          textAlign: TextAlign.center,
-        ),
-        //Text('There are $slots available!'),
-        // Button(
-        //   tag: 'book',
-        //   enabled: bookButtonEnabled,
-        //   function: (){book(getDateId(dateFriday));},
-        //   text: 'Book slot',
-        // ),
-        Button(
-          tag: 'book',
-          enabled: bookButtonEnabled,
-          height: MediaQuery.of(context).size.width*0.75,
-          shapeBorder: CircleBorder(side: BorderSide.none),
-          function: (){book(getDateId(dateFriday));},
-          child: Column(
-            children: [
-              Text('Book slot', style: TextStyle(color: background, fontSize: 30.0)),
-              Text('$slots slots available', style: TextStyle(color: background)),
-            ],
-          ),
-        ),
-        Button(
-          tag: 'unbook',
-          enabled: (!bookButtonEnabled && Usr.attending),
-          function: !(!bookButtonEnabled && Usr.attending) ? null : (){unbook(getDateId(dateFriday));},
-          text: 'Unbook slot',
+        Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Button(
+              tag: 'directions',
+              text: 'Get me there!',
+              function: () async {
+                double lat = 51.509514;
+                double lng = -0.124244;
+                //var uri = Uri.parse("google.navigation:q=$lat,$lng&mode=d");
+                var uri = Uri.parse("geo:$lat,${lng}?q=$lat,$lng");
+                //var uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+                if (await canLaunch(uri.toString())) {
+                  await launch(uri.toString());
+                }
+              },
+            ),
+          ],
         ),
       ],
     );

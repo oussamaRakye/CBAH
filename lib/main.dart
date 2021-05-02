@@ -14,6 +14,7 @@ import 'package:cbah/notifications.dart';
 
 void main() => runApp(CBAH());
 
+// TODO: add flexible (as parent) to all heros
 class CBAH extends StatelessWidget {
 
   @override
@@ -33,7 +34,11 @@ class CBAH extends StatelessWidget {
     // );
 
     return MaterialApp(
-      theme: ThemeData.dark(),
+      theme: ThemeData.dark().copyWith(
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: Colors.white,
+        ),
+      ),
       initialRoute: FlashScreen.id,
       routes: {
         FlashScreen.id: (context) => FlashScreen(),

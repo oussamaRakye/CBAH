@@ -1,6 +1,7 @@
 import 'package:cbah/welcomeScreen.dart';
 import 'package:flutter/material.dart';
 import 'constants.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FlashScreen extends StatefulWidget {
 
@@ -18,6 +19,7 @@ class _FlashScreenState extends State<FlashScreen> {
     super.initState();
 
     Future.delayed(Duration(seconds: 2), () {
+      final _authe
       Navigator.pushNamed(context, WelcomeScreen.id);
     });
   }
